@@ -4,12 +4,15 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -24,9 +27,11 @@ import java.util.List;
 
 public class DictionaryFragment extends Fragment {
     public static final int SPAN_COUNT = 1;
+    public static final String BUNDLE_IS_SUBTITLE_VISIBLE = "isSubtitleVisible";
     private RecyclerView mRecyclerView;
     private IRepository mRepository;
-//    private WordAdapter mAdapter;
+    private WordAdapter mAdapter;
+    private boolean mIsSubtitleVisible = false;
 
     public DictionaryFragment() {
         // Required empty public constructor
@@ -44,16 +49,21 @@ public class DictionaryFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
+        setHasOptionsMenu(true);
 
         mRepository = WordRepository.getInstance(getContext());
+        mRepository.insert(new Word("Hello", "سلام"));
 
+        if (savedInstanceState != null) {
+            mIsSubtitleVisible = savedInstanceState.getBoolean(BUNDLE_IS_SUBTITLE_VISIBLE, false);
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_dictionary, container, false);
-        mRepository.insert(new Word("Hello","سلام"));
+
         findViews(view);
         initViews();
 
@@ -61,7 +71,7 @@ public class DictionaryFragment extends Fragment {
     }
 
     private void findViews(View view) {
-        mRecyclerView = view.findViewById(R.id.recycler_view);
+        mRecyclerView = view.findViewById(R.id.recyclerView);
     }
 
     private void initViews() {
@@ -79,9 +89,17 @@ public class DictionaryFragment extends Fragment {
     }
 
     private void initUI() {
-        List<Word> sounds = mRepository.getList();
-        WordAdapter adapter = new WordAdapter(sounds);
-        mRecyclerView.setAdapter(adapter);
+        List<Word> words = mRepository.getList();
+        if (mAdapter == null) {
+            mAdapter = new WordAdapter(words);
+            mRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.setWords(words);
+            mAdapter.notifyDataSetChanged();
+        }
+//        WordAdapter adapter = new WordAdapter(words);
+//        mRecyclerView.setAdapter(adapter);
+
     }
 
     private class WordHolder extends RecyclerView.ViewHolder {
@@ -111,7 +129,7 @@ public class DictionaryFragment extends Fragment {
         }
     }
 
-    private class WordAdapter extends RecyclerView.Adapter<WordHolder>{
+    private class WordAdapter extends RecyclerView.Adapter<WordHolder> {
         private List<Word> mWords;
 
         public WordAdapter(List<Word> words) {
@@ -134,7 +152,7 @@ public class DictionaryFragment extends Fragment {
         @NonNull
         @Override
         public WordHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(getActivity()).inflate(R.layout.item_row,parent,false);
+            View view = LayoutInflater.from(getActivity()).inflate(R.layout.item_row, parent, false);
             return new WordHolder(view);
         }
 
@@ -146,6 +164,11 @@ public class DictionaryFragment extends Fragment {
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        initUI();
+    }
 
 //    private void updateUI() {
 //        List<Word> words = mRepository.getList();
@@ -162,4 +185,57 @@ public class DictionaryFragment extends Fragment {
 //    }
 
 
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_list, menu);
+
+        MenuItem item = menu.findItem(R.id.show_numbers);
+        updateMenuItemSubtitle(item);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.add_new_word:
+                return true;
+            case R.id.show_numbers:
+                mIsSubtitleVisible = !mIsSubtitleVisible;
+
+                updateMenuItemSubtitle(item);
+                getActivity().invalidateOptionsMenu();
+                updateSubtitle();
+                return true;
+            case R.id.delete_all_word:
+                mRepository.clear();
+                initUI();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
+    private void updateMenuItemSubtitle(@NonNull MenuItem item) {
+        if (mIsSubtitleVisible)
+            item.setTitle(R.string.hide_numbers);
+        else
+            item.setTitle(R.string.show_numbers);
+    }
+
+    private void updateSubtitle() {
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        String stringWords = getString(R.string.subtitle, mRepository.getList().size());
+
+        if (!mIsSubtitleVisible)
+            stringWords = null;
+
+        activity.getSupportActionBar().setSubtitle(stringWords);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putBoolean(BUNDLE_IS_SUBTITLE_VISIBLE, mIsSubtitleVisible);
+    }
 }

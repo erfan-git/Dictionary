@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/add_new_word"
+        android:icon="@drawable/add_new_1"
+        android:title="@string/new_word"
+        android:visible="true"
+        app:showAsAction="ifRoom|withText" />
+    <item
+        android:id="@+id/delete_all_word"
+        android:icon="@drawable/document_delete"
+        android:title="@string/delete_all"
+        app:showAsAction="ifRoom|withText" />
+    <item
+        android:id="@+id/show_numbers"
+        android:title="@string/show_numbers"
+        app:showAsAction="ifRoom|withText" />
+</menu>

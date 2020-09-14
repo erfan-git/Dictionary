@@ -59,6 +59,11 @@ public class WordRepository implements IRepository<Word> {
     }
 
     @Override
+    public void clear() {
+        mDatabase.WordDAO().clear();
+    }
+
+    @Override
     public int getPosition(UUID uuid) {
         List<Word> words = getList();
         for (int i = 0; i < words.size(); i++) {

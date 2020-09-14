@@ -14,6 +14,7 @@ public interface IRepository<E> {
     void update(E e);
     void delete(E e);
     void insert(E e);
+    void clear();
 //    void insertList(List<E> list);
     int getPosition(UUID uuid);
     File getPhotoFile(Context context, Word word);
