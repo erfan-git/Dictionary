@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -33,12 +37,16 @@ import java.util.List;
 public class DictionaryFragment extends Fragment {
     public static final int SPAN_COUNT = 1;
     public static final String BUNDLE_IS_SUBTITLE_VISIBLE = "isSubtitleVisible";
+    public static final int REQUEST_CODE_DATE_PICKER = 0;
+    public static final String DIALOG_FRAGMENT_TAG = "Dialog";
+    public static final String TAG = "DIC";
     private RecyclerView mRecyclerView;
     private IRepository mRepository;
     private WordAdapter mAdapter;
     private boolean mIsSubtitleVisible = false;
     private ImageView mImageViewEmptyList;
     private SearchView mSearch;
+    private EditText mEditTextSearch;
 
     public DictionaryFragment() {
         // Required empty public constructor
@@ -74,6 +82,20 @@ public class DictionaryFragment extends Fragment {
         findViews(view);
         initViews();
 
+        mImageViewEmptyList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DetailWordDialog detailWordDialogFragment = DetailWordDialog.newInstance();
+
+                //create parent-child relations between CrimeDetailFragment-DatePickerFragment
+                detailWordDialogFragment.setTargetFragment(DictionaryFragment.this, REQUEST_CODE_DATE_PICKER);
+
+                detailWordDialogFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                mAdapter.notifyDataSetChanged();
+                initUI();
+            }
+        });
+
         return view;
     }
 
@@ -97,7 +119,10 @@ public class DictionaryFragment extends Fragment {
         initUI();
     }
 
+
+
     private void initUI() {
+        Log.d(TAG,"initUi");
         List<Word> words = mRepository.getList();
         if (mAdapter == null) {
             mAdapter = new WordAdapter(words);
@@ -125,7 +150,14 @@ public class DictionaryFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    DetailWordDialog detailWordDialogFragment = DetailWordDialog.newInstance(mWord);
 
+                    //create parent-child relations between CrimeDetailFragment-DatePickerFragment
+                    detailWordDialogFragment.setTargetFragment(DictionaryFragment.this, REQUEST_CODE_DATE_PICKER);
+
+                    detailWordDialogFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                    mAdapter.notifyDataSetChanged();
+                    initUI();
                 }
             });
         }
@@ -190,6 +222,14 @@ public class DictionaryFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.add_new_word:
+                DetailWordDialog detailWordDialogFragment = DetailWordDialog.newInstance();
+
+                //create parent-child relations between CrimeDetailFragment-DatePickerFragment
+                detailWordDialogFragment.setTargetFragment(DictionaryFragment.this, REQUEST_CODE_DATE_PICKER);
+
+                detailWordDialogFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                mAdapter.notifyDataSetChanged();
+                initUI();
                 return true;
             case R.id.show_numbers:
                 mIsSubtitleVisible = !mIsSubtitleVisible;
@@ -198,8 +238,6 @@ public class DictionaryFragment extends Fragment {
                 return true;
             case R.id.delete_all_word:
                 showQuestionDialog();
-
-
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -256,39 +294,39 @@ public class DictionaryFragment extends Fragment {
     }
 
 
-//    private void setSearchView() {
-//
-//        mSearch.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-//
-//        mSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-//            @Override
-//            public boolean onQueryTextSubmit(String query) {
-//                return false;
-//            }
-//
-//            @Override
-//            public boolean onQueryTextChange(String newText) {
+    private void setSearchView() {
+
+        mSearch.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+
+        mSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
 //                mAdapter.getFilter().filter(newText);
-//                return true;
-//            }
-//        });
-//
-//
-//        mEditTextSearch.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//
-//            }
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                return true;
+            }
+        });
+
+
+        mEditTextSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
 //                setKey();
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {
-//
-//            }
-//        });
-//    }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+    }
 }

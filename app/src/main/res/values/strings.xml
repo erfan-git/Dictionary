@@ -11,4 +11,7 @@
 
     <string name="yess">YES</string>
     <string name="noo">NO</string>
+    <string name="title_word">Word</string>
+    <string name="word">Word</string>
+    <string name="translation">Translation</string>
 </resources>
