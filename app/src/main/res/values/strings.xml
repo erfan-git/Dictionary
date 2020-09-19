@@ -8,4 +8,7 @@
     <string name="subtitle">%1$d words</string>
     <string name="show_numbers">Show Numbers</string>
     <string name="hide_numbers">Hide Numbers</string>
+
+    <string name="yess">YES</string>
+    <string name="noo">NO</string>
 </resources>

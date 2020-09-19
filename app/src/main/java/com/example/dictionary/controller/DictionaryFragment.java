@@ -1,9 +1,11 @@
 package com.example.dictionary.controller;
 
+import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -15,6 +17,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.ImageView;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import com.example.dictionary.R;
@@ -32,6 +37,8 @@ public class DictionaryFragment extends Fragment {
     private IRepository mRepository;
     private WordAdapter mAdapter;
     private boolean mIsSubtitleVisible = false;
+    private ImageView mImageViewEmptyList;
+    private SearchView mSearch;
 
     public DictionaryFragment() {
         // Required empty public constructor
@@ -72,6 +79,8 @@ public class DictionaryFragment extends Fragment {
 
     private void findViews(View view) {
         mRecyclerView = view.findViewById(R.id.recyclerView);
+        mImageViewEmptyList = view.findViewById(R.id.imageView_empty);
+        mSearch = view.findViewById(R.id.searchView);
     }
 
     private void initViews() {
@@ -97,9 +106,8 @@ public class DictionaryFragment extends Fragment {
             mAdapter.setWords(words);
             mAdapter.notifyDataSetChanged();
         }
-//        WordAdapter adapter = new WordAdapter(words);
-//        mRecyclerView.setAdapter(adapter);
-
+        handleEmptyList();
+        updateSubtitle();
     }
 
     private class WordHolder extends RecyclerView.ViewHolder {
@@ -170,21 +178,6 @@ public class DictionaryFragment extends Fragment {
         initUI();
     }
 
-//    private void updateUI() {
-//        List<Word> words = mRepository.getList();
-//
-//        if (mAdapter == null) {
-//            mAdapter = new CrimeAdapter(crimes);
-//            mRecyclerView.setAdapter(mAdapter);
-//        } else {
-//            mAdapter.setCrimes(crimes);
-//            mAdapter.notifyDataSetChanged();
-//        }
-//
-//        updateSubtitle();
-//    }
-
-
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_list, menu);
@@ -200,14 +193,13 @@ public class DictionaryFragment extends Fragment {
                 return true;
             case R.id.show_numbers:
                 mIsSubtitleVisible = !mIsSubtitleVisible;
-
-                updateMenuItemSubtitle(item);
                 getActivity().invalidateOptionsMenu();
                 updateSubtitle();
                 return true;
             case R.id.delete_all_word:
-                mRepository.clear();
-                initUI();
+                showQuestionDialog();
+
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -238,4 +230,65 @@ public class DictionaryFragment extends Fragment {
 
         outState.putBoolean(BUNDLE_IS_SUBTITLE_VISIBLE, mIsSubtitleVisible);
     }
+
+    private void handleEmptyList() {
+        if (mRepository.getList().size() == 0) {
+            mImageViewEmptyList.setVisibility(View.VISIBLE);
+            mImageViewEmptyList.bringToFront();
+        } else
+            mImageViewEmptyList.setVisibility(View.GONE);
+    }
+
+    private void showQuestionDialog() {
+
+        new AlertDialog.Builder(getActivity())
+                .setTitle("Are you sure ?")
+                .setPositiveButton(R.string.yess, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mRepository.clear();
+                        initUI();
+                    }
+                })
+                .setNegativeButton(R.string.noo, null)
+                .show();
+
+    }
+
+
+//    private void setSearchView() {
+//
+//        mSearch.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+//
+//        mSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//            @Override
+//            public boolean onQueryTextSubmit(String query) {
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onQueryTextChange(String newText) {
+//                mAdapter.getFilter().filter(newText);
+//                return true;
+//            }
+//        });
+//
+//
+//        mEditTextSearch.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//                setKey();
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//
+//            }
+//        });
+//    }
 }
