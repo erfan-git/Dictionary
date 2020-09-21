@@ -157,8 +157,7 @@ public class DetailWordDialog extends DialogFragment {
         mDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mRepository.delete(mCurrentWord);
-                setResult();
+                showQuestionDialog();
                 dismiss();
             }
         });
@@ -180,6 +179,21 @@ public class DetailWordDialog extends DialogFragment {
 
     private String getReportText() {
         return getString(R.string.word_report, mCurrentWord.getBaseWord(), mCurrentWord.getTranslation());
+    }
+
+    private void showQuestionDialog() {
+
+        new androidx.appcompat.app.AlertDialog.Builder(getActivity())
+                .setTitle("Are you sure ?")
+                .setPositiveButton(R.string.yess, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mRepository.delete(mCurrentWord);
+                        setResult();
+                    }
+                })
+                .setNegativeButton(R.string.noo, null)
+                .show();
     }
 
     private void setResult() {
