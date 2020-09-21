@@ -12,10 +12,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.example.dictionary.R;
@@ -23,13 +22,11 @@ import com.example.dictionary.dataBase.WordRepository;
 import com.example.dictionary.model.Word;
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.util.Date;
-import java.util.GregorianCalendar;
-
 public class DetailWordDialog extends DialogFragment {
 
-    public static final String EXTRA_USER_SELECTED_DATE = "com.example.dictionary.userSelectedWord";
+    public static final String EXTRA_NEW_WORD = "com.example.dictionary.userSelectedWord";
     public static final String ARG_WORD = "currentWord";
+    public static final String TAG = "tag";
     private WordRepository mRepository;
     private Word mCurrentWord;
     private TextInputEditText mEditTextWord;
@@ -65,6 +62,7 @@ public class DetailWordDialog extends DialogFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         mRepository = WordRepository.getInstance(getContext());
         if (getArguments() != null) {
@@ -82,7 +80,7 @@ public class DetailWordDialog extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-
+        Log.d(TAG, "onCreateDialog");
 
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View view = inflater.inflate(R.layout.detail_word_dialog, null);
@@ -105,9 +103,11 @@ public class DetailWordDialog extends DialogFragment {
                                 mEditTextWord.setError("Word Can not be empty.");
                                 mEditTextTranslation.setError("Translation Can not be empty.");
                             } else {
-                                mRepository.insert(new Word(mEditTextWord.getText().toString(), mEditTextTranslation.getText().toString()));
-                                dismiss();
+                                mCurrentWord = new Word(mEditTextWord.getText().toString(), mEditTextTranslation.getText().toString());
+                                mRepository.insert(mCurrentWord);
+
                             }
+                            setResult();
                         }
                     })
                     .setNegativeButton(android.R.string.cancel, null)
@@ -129,8 +129,8 @@ public class DetailWordDialog extends DialogFragment {
                                 mCurrentWord.setBaseWord(mEditTextWord.getText().toString());
                                 mCurrentWord.setTranslation(mEditTextTranslation.getText().toString());
                                 mRepository.update(mCurrentWord);
-                                dismiss();
                             }
+                            setResult();
                         }
                     })
                     .setNegativeButton(android.R.string.cancel, null)
@@ -158,6 +158,7 @@ public class DetailWordDialog extends DialogFragment {
             @Override
             public void onClick(View view) {
                 mRepository.delete(mCurrentWord);
+                setResult();
                 dismiss();
             }
         });
@@ -165,15 +166,26 @@ public class DetailWordDialog extends DialogFragment {
         mShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, getReportText());
+                sendIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.word_report_subject));
+                sendIntent.setType("text/plain");
 
+                Intent shareIntent = Intent.createChooser(sendIntent,null);
+                startActivity(shareIntent);
             }
         });
     }
 
-//    private void setResult(W userSelectedDate) {
-//        Fragment fragment = getTargetFragment();
-//        Intent intent = new Intent();
-//        intent.putExtra(EXTRA_USER_SELECTED_DATE, userSelectedDate);
-//        fragment.onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, intent);
-//    }
+    private String getReportText() {
+        return getString(R.string.word_report, mCurrentWord.getBaseWord(), mCurrentWord.getTranslation());
+    }
+
+    private void setResult() {
+        Fragment fragment = getTargetFragment();
+        Intent intent = new Intent();
+        intent.putExtra(EXTRA_NEW_WORD, mIsNewWord);
+        fragment.onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, intent);
+    }
 }

@@ -54,6 +54,8 @@
         android:background="@color/fog"
         android:foregroundGravity="top"
         android:gravity="top"
+        android:queryHint="Search Here"
+        android:iconifiedByDefault="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.542"
         app:layout_constraintStart_toStartOf="parent"

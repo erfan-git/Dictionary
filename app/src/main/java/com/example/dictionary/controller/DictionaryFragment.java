@@ -1,16 +1,12 @@
 package com.example.dictionary.controller;
 
+import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -22,16 +18,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dictionary.R;
 import com.example.dictionary.dataBase.IRepository;
 import com.example.dictionary.dataBase.WordRepository;
 import com.example.dictionary.model.Word;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.example.dictionary.controller.DetailWordDialog.EXTRA_NEW_WORD;
 
 
 public class DictionaryFragment extends Fragment {
@@ -47,6 +57,7 @@ public class DictionaryFragment extends Fragment {
     private ImageView mImageViewEmptyList;
     private SearchView mSearch;
     private EditText mEditTextSearch;
+    private boolean mBooleanIsEn;
 
     public DictionaryFragment() {
         // Required empty public constructor
@@ -62,6 +73,7 @@ public class DictionaryFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreateDictionary");
         if (getArguments() != null) {
         }
         setHasOptionsMenu(true);
@@ -77,10 +89,12 @@ public class DictionaryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_dictionary, container, false);
 
         findViews(view);
         initViews();
+        setSearchView();
 
         mImageViewEmptyList.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -120,9 +134,8 @@ public class DictionaryFragment extends Fragment {
     }
 
 
-
     private void initUI() {
-        Log.d(TAG,"initUi");
+        Log.d(TAG, "initUi");
         List<Word> words = mRepository.getList();
         if (mAdapter == null) {
             mAdapter = new WordAdapter(words);
@@ -169,11 +182,14 @@ public class DictionaryFragment extends Fragment {
         }
     }
 
-    private class WordAdapter extends RecyclerView.Adapter<WordHolder> {
+    private class WordAdapter extends RecyclerView.Adapter<WordHolder> implements Filterable {
         private List<Word> mWords;
+        private List<Word> mListWords;
+
 
         public WordAdapter(List<Word> words) {
             mWords = words;
+            mListWords = new ArrayList<>(words);
         }
 
         public List<Word> getWords() {
@@ -202,18 +218,43 @@ public class DictionaryFragment extends Fragment {
             holder.bindWord(word);
         }
 
-    }
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    List<Word> filteredList = new ArrayList<>();
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        initUI();
+                    if (charSequence == null || charSequence.length() == 0) {
+                        filteredList.addAll(mListWords);
+                    } else {
+                        String filterPattern = charSequence.toString().toLowerCase().trim();
+                        for (Word word : mListWords) {
+                            if (word.getBaseWord().toLowerCase().contains(filterPattern)
+                                    || word.getTranslation().toLowerCase().contains(filterPattern)) {
+                                filteredList.add(word);
+                            }
+                        }
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = filteredList;
+                    return filterResults;
+                }
+
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+//                    movieListFiltered = (ArrayList<Movie>) filterResults.values;
+                    notifyDataSetChanged();
+                }
+            };
+        }
+
     }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_list, menu);
-
         MenuItem item = menu.findItem(R.id.show_numbers);
         updateMenuItemSubtitle(item);
     }
@@ -243,6 +284,25 @@ public class DictionaryFragment extends Fragment {
                 return super.onOptionsItemSelected(item);
         }
 
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult" + data + Activity.RESULT_OK);
+        if (resultCode != Activity.RESULT_OK && data != null) {
+            return;
+        }
+        if (requestCode == REQUEST_CODE_DATE_PICKER) {
+            boolean flag = data.getBooleanExtra(EXTRA_NEW_WORD, false);
+            Log.d(TAG, "onActivityResult1");
+            if (flag) {
+
+                Toast.makeText(getActivity(), "Saved!", Toast.LENGTH_LONG).show();
+
+            }
+            initUI();
+        }
     }
 
     private void updateMenuItemSubtitle(@NonNull MenuItem item) {
@@ -294,39 +354,43 @@ public class DictionaryFragment extends Fragment {
     }
 
 
+
+
     private void setSearchView() {
 
         mSearch.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
 
+//        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//
+//        mSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//            @Override
+//            public boolean onQueryTextSubmit(String query) {
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onQueryTextChange(String newText) {
+//                mAdapter.getFilter().filter(newText);
+//                return true;
+//            }
+//        });
+
+//        mSearch.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        mSearch.setMaxWidth(Integer.MAX_VALUE);
+
         mSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                mAdapter.getFilter().filter(query);
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
-//                mAdapter.getFilter().filter(newText);
-                return true;
+            public boolean onQueryTextChange(String query) {
+                mAdapter.getFilter().filter(query);
+                return false;
             }
         });
 
-
-        mEditTextSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//                setKey();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
     }
 }

@@ -14,4 +14,7 @@
     <string name="title_word">Word</string>
     <string name="word">Word</string>
     <string name="translation">Translation</string>
+    
+    <string name="word_report_subject">Word of Dictionary</string>
+    <string name="word_report">The meaning of ( %1$s )  in persian is ( %2$s ) ---> \n\t"%1$s" == "%2$s"</string>
 </resources>
